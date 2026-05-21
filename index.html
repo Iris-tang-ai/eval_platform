@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EvalPlatform · 大模型自动化评测平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', '"Noto Sans SC"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    .bg-grid {
+      background-image:
+        linear-gradient(to right, rgba(99,102,241,0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99,102,241,0.035) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    @keyframes dot-pulse {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+    .loading-dot { animation: dot-pulse 1.4s infinite ease-in-out both; }
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes cell-run {
+      0%, 100% { border-color: rgba(99,102,241,0.25); box-shadow: 0 0 0 0 rgba(99,102,241,0.15); }
+      50% { border-color: rgba(99,102,241,0.7); box-shadow: 0 0 12px 0 rgba(99,102,241,0.2); }
+    }
+    .cell-running { animation: cell-run 0.7s ease-in-out infinite; }
+
+    @keyframes fade-slide-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .anim-fade-up { animation: fade-slide-up 0.4s ease-out forwards; }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .anim-fade { animation: fade-in 0.5s ease-out forwards; }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .shimmer-bar {
+      background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.15) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes progress-glow {
+      0%, 100% { box-shadow: 0 0 8px rgba(99,102,241,0.3); }
+      50% { box-shadow: 0 0 16px rgba(99,102,241,0.5); }
+    }
+
+    .row-enter { animation: fade-slide-up 0.35s ease-out forwards; }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px -4px rgba(99,102,241,0.45);
+    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .metric-card {
+      background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen antialiased">
+  <div x-data="evalApp()" x-init="init()" class="min-h-screen flex flex-col bg-grid">
+
+    <!-- ═══════════ HEADER ═══════════ -->
+    <header class="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <svg class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 00-.659 1.59v1.19a.75.75 0 01-.75.75h-6.24a.75.75 0 01-.75-.75v-1.19a2.25 2.25 0 00-.659-1.59L5 14.5m14 0V9a2.25 2.25 0 00-2.25-2.25H7.25A2.25 2.25 0 005 9v5.5"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold tracking-tight text-white">EvalPlatform</h1>
+            <p class="text-[10px] text-slate-500 -mt-0.5 tracking-wide">大模型自动化评测平台</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="hidden sm:inline text-xs text-slate-500 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700/50">Prototype v0.1</span>
+          <div class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-[10px] font-bold text-white">U</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══════════ STEPPER ═══════════ -->
+    <nav class="max-w-3xl w-full mx-auto pt-8 pb-4 px-4">
+      <div class="flex items-center justify-center">
+        <template x-for="(s, i) in steps" :key="i">
+          <div class="flex items-center">
+            <button @click="goToStep(s.num)" :disabled="!isStepUnlocked(s.num)"
+                    class="flex flex-col items-center gap-2 w-20 sm:w-24 group cursor-pointer disabled:cursor-not-allowed focus:outline-none">
+              <div class="relative">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 border-2"
+                     :class="{
+                       'bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-110': step === s.num,
+                       'bg-indigo-500/15 border-indigo-500/40 text-indigo-400': isStepCompleted(s.num) && step !== s.num,
+                       'bg-slate-800/80 border-slate-700 text-slate-500': !isStepUnlocked(s.num),
+                       'bg-slate-800/80 border-slate-600 text-slate-400 group-hover:border-slate-500': isStepUnlocked(s.num) && !isStepCompleted(s.num) && step !== s.num
+                     }">
+                  <template x-if="isStepCompleted(s.num) && step !== s.num">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  </template>
+                  <template x-if="!(isStepCompleted(s.num) && step !== s.num)">
+                    <span x-text="s.num"></span>
+                  </template>
+                </div>
+                <div x-show="step === s.num" class="absolute inset-0 rounded-full border-2 border-indigo-400/30 animate-ping" style="animation-duration:2s"></div>
+              </div>
+              <span class="text-[11px] font-medium whitespace-nowrap transition-colors duration-300"
+                    :class="{
+                      'text-indigo-400 font-semibold': step === s.num,
+                      'text-slate-400': isStepUnlocked(s.num) && step !== s.num,
+                      'text-slate-600': !isStepUnlocked(s.num)
+                    }" x-text="s.label"></span>
+            </button>
+            <div x-show="i < 3" class="w-10 sm:w-16 md:w-24 h-0.5 -mt-5 rounded-full transition-all duration-500"
+                 :class="isStepCompleted(s.num) ? 'bg-gradient-to-r from-indigo-500 to-indigo-500/40' : 'bg-slate-800'"></div>
+          </div>
+        </template>
+      </div>
+    </nav>
+
+    <!-- ═══════════ CONTENT ═══════════ -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pb-16">
+
+      <!-- ──── STEP 1: 任务拆解 ──── -->
+      <section x-show="step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span class="text-indigo-400">01.</span> 智能任务拆解
+          </h2>
+          <p class="text-sm text-slate-400 mt-1">用自然语言描述您的评测需求，AI 将自动解析为结构化任务定义</p>
+        </div>
+
+        <div class="glass-card rounded-xl p-6 space-y-5">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">评测需求描述</label>
+            <textarea x-model="taskInput" rows="4" placeholder="例如：我需要评测 GPT-4o、Claude-3.5、Gemini-Pro、Qwen-Max 四个模型在语言理解、逻辑推理、代码生成和创意写作四个维度上的综合能力表现，每个维度设计多个测试用例，并生成对比报告..."
+                      class="w-full bg-slate-900/70 border border-slate-700/70 rounded-lg px-4 py-3 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50 transition-all"></textarea>
+          </div>
+          <div class="flex items-center gap-3">
+            <button @click="decompose()" :disabled="!taskInput.trim() || decomposing" class="btn-primary text-white text-sm font-medium px-5 py-2.5 rounded-lg flex items-center gap-2">
+              <template x-if="!decomposing">
+                <span class="flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+                  智能拆解
+                </span>
+              </template>
+              <template x-if="decomposing">
+                <span class="flex items-center gap-2">
+                  <span class="flex gap-1">
+                    <span class="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block"></span>
+                    <span class="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block"></span>
+                    <span class="loading-dot w-1.5 h-1.5 rounded-full bg-white inline-block"></span>
+                  </span>
+                  AI 分析中
+                </span>
+              </template>
+            </button>
+            <span x-show="decomposing" class="text-xs text-slate-500">正在解析自然语言，构建结构化任务...</span>
+          </div>
+        </div>
+
+        <!-- JSON Schema Result -->
+        <div x-show="taskDecomposed" x-transition:enter="transition ease-out duration-500 delay-100" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+             class="mt-6 glass-card rounded-xl overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-slate-700/50 bg-slate-800/40">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></div>
+              <span class="text-xs font-medium text-slate-300">任务定义 — JSON Schema</span>
+            </div>
+            <button @click="showToast('已复制到剪贴板')" class="text-xs text-slate-500 hover:text-indigo-400 transition-colors flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"/></svg>
+              复制
+            </button>
+          </div>
+          <pre class="p-5 text-xs leading-relaxed overflow-x-auto font-mono" x-html="syntaxHighlight(taskSchema)"></pre>
+        </div>
+
+        <!-- Next button -->
+        <div x-show="taskDecomposed" x-transition class="mt-6 flex justify-end">
+          <button @click="goToStep(2); maxStep = Math.max(maxStep, 2)" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-colors group">
+            下一步：Query 扩充
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ──── STEP 2: Query 扩充 ──── -->
+      <section x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              <span class="text-indigo-400">02.</span> Query 扩充
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">粘贴现有测试用例，或使用 AI 自动泛化补充</p>
+          </div>
+          <button @click="expandQueries()" :disabled="expanding || expanded"
+                  class="btn-primary text-white text-sm font-medium px-5 py-2.5 rounded-lg flex items-center gap-2 self-start">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
+            <span x-text="expanded ? '已完成泛化' : '自动泛化补充'"></span>
+          </button>
+        </div>
+
+        <!-- Expansion progress -->
+        <div x-show="expanding" x-transition class="mb-5 glass-card rounded-xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400 flex items-center gap-2">
+              <span class="flex gap-1">
+                <span class="loading-dot w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>
+                <span class="loading-dot w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>
+                <span class="loading-dot w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>
+              </span>
+              AI 正在分析语义空间，泛化生成补充用例...
+            </span>
+            <span class="text-indigo-400 font-mono font-medium" x-text="expandProgress + '%'"></span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full transition-all duration-150 ease-linear" :style="'width:' + expandProgress + '%'"></div>
+          </div>
+        </div>
+
+        <!-- Query table -->
+        <div class="glass-card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-700/50 bg-slate-800/50">
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-12">#</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Query 内容</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-28">分类</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">难度</th>
+                  <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider w-20">来源</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(q, i) in queries" :key="q.id">
+                  <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors" :class="q.isNew ? 'row-enter bg-indigo-500/5' : ''">
+                    <td class="px-5 py-3 text-slate-500 font-mono text-xs" x-text="i + 1"></td>
+                    <td class="px-5 py-3 text-slate-200" x-text="q.text"></td>
+                    <td class="px-5 py-3">
+                      <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-700/60 text-slate-300" x-text="q.category"></span>
+                    </td>
+                    <td class="px-5 py-3">
+                      <span class="px-2 py-0.5 rounded-md text-xs font-medium"
+                            :class="{
+                              'bg-emerald-500/15 text-emerald-400': q.difficulty === '简单',
+                              'bg-amber-500/15 text-amber-400': q.difficulty === '中等',
+                              'bg-rose-500/15 text-rose-400': q.difficulty === '困难'
+                            }" x-text="q.difficulty"></span>
+                    </td>
+                    <td class="px-5 py-3">
+                      <span class="text-xs" :class="q.source === 'auto' ? 'text-indigo-400' : 'text-slate-500'" x-text="q.source === 'auto' ? 'AI 生成' : '手动'"></span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-5 py-3 border-t border-slate-700/50 bg-slate-800/20 flex items-center justify-between">
+            <span class="text-xs text-slate-500">共 <span class="text-indigo-400 font-medium" x-text="queries.length"></span> 条用例</span>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-6 flex justify-between">
+          <button @click="goToStep(1)" class="text-sm font-medium text-slate-400 hover:text-slate-300 flex items-center gap-1.5 transition-colors group">
+            <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+            上一步
+          </button>
+          <button @click="goToStep(3); maxStep = Math.max(maxStep, 3)" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-colors group">
+            下一步：并发跑测
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ──── STEP 3: 并发跑测 ──── -->
+      <section x-show="step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              <span class="text-indigo-400">03.</span> 并发跑测
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">一键启动多模型并行评测，实时追踪每条用例状态</p>
+          </div>
+          <button @click="startTesting()" :disabled="testing || testComplete"
+                  class="btn-primary text-white text-sm font-medium px-6 py-2.5 rounded-lg flex items-center gap-2 self-start">
+            <template x-if="!testing && !testComplete">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/></svg>
+                一键并发跑测
+              </span>
+            </template>
+            <template x-if="testing">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                测试进行中...
+              </span>
+            </template>
+            <template x-if="!testing && testComplete">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                测试完成
+              </span>
+            </template>
+          </button>
+        </div>
+
+        <!-- Progress bar & stats -->
+        <div x-show="testing || testComplete" x-transition class="mb-5 glass-card rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">
+              完成进度
+            </span>
+            <div class="flex items-center gap-4">
+              <span class="text-emerald-400 font-medium">
+                <svg class="w-3.5 h-3.5 inline -mt-0.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                成功: <span x-text="successCount"></span>
+              </span>
+              <span class="text-rose-400 font-medium" x-show="failCount > 0">
+                <svg class="w-3.5 h-3.5 inline -mt-0.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                失败: <span x-text="failCount"></span>
+              </span>
+              <span class="text-indigo-400 font-mono font-medium" x-text="testProgress + '%'"></span>
+            </div>
+          </div>
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-200 ease-linear"
+                 :class="testComplete ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-indigo-500 to-blue-500'"
+                 :style="'width:' + testProgress + '%'"></div>
+          </div>
+        </div>
+
+        <!-- Test Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <template x-for="(cell, i) in testGrid" :key="i">
+            <div class="rounded-xl p-3.5 border-2 transition-all duration-300"
+                 :class="{
+                   'bg-slate-800/40 border-slate-700/40': cell.status === 'pending',
+                   'bg-indigo-500/5 border-indigo-500/40 cell-running': cell.status === 'running',
+                   'bg-emerald-500/5 border-emerald-500/30': cell.status === 'pass',
+                   'bg-rose-500/5 border-rose-500/30': cell.status === 'fail'
+                 }">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400" x-text="cell.model"></span>
+                <template x-if="cell.status === 'pending'">
+                  <div class="w-2 h-2 rounded-full bg-slate-600"></div>
+                </template>
+                <template x-if="cell.status === 'running'">
+                  <svg class="w-3.5 h-3.5 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                </template>
+                <template x-if="cell.status === 'pass'">
+                  <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                </template>
+                <template x-if="cell.status === 'fail'">
+                  <svg class="w-4 h-4 text-rose-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                </template>
+              </div>
+              <p class="text-xs text-slate-400 truncate leading-relaxed" x-text="cell.query"></p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty state -->
+        <div x-show="testGrid.length === 0" class="glass-card rounded-xl p-12 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
+            <svg class="w-8 h-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+          </div>
+          <p class="text-slate-500 text-sm">点击「一键并发跑测」启动评测</p>
+          <p class="text-slate-600 text-xs mt-1">将对 <span class="text-indigo-400" x-text="queries.length"></span> 条用例 × 4 个模型进行并行测试</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-6 flex justify-between">
+          <button @click="goToStep(2)" class="text-sm font-medium text-slate-400 hover:text-slate-300 flex items-center gap-1.5 transition-colors group">
+            <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+            上一步
+          </button>
+          <button x-show="testComplete" @click="goToStep(4)" class="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-colors group">
+            查看报告
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ──── STEP 4: 智能报告 ──── -->
+      <section x-show="step === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span class="text-indigo-400">04.</span> 智能报告
+          </h2>
+          <p class="text-sm text-slate-400 mt-1">评测完成，以下是自动生成的综合分析报告</p>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="metric-card rounded-xl p-5 border border-slate-700/40 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full -mr-6 -mt-6"></div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">总用例数</p>
+            <p class="text-3xl font-extrabold text-white" x-text="displayTotal"></p>
+            <p class="text-xs text-slate-500 mt-1">4 维度 × 4 模型</p>
+          </div>
+          <div class="metric-card rounded-xl p-5 border border-slate-700/40 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full -mr-6 -mt-6"></div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">完美达成率</p>
+            <p class="text-3xl font-extrabold text-emerald-400"><span x-text="displayRate"></span><span class="text-lg">%</span></p>
+            <p class="text-xs text-slate-500 mt-1"><span x-text="successCount"></span> / <span x-text="totalTests"></span> 通过</p>
+          </div>
+          <div class="metric-card rounded-xl p-5 border border-slate-700/40 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full -mr-6 -mt-6"></div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">平均耗时</p>
+            <p class="text-3xl font-extrabold text-blue-400"><span x-text="displayTime"></span><span class="text-lg">s</span></p>
+            <p class="text-xs text-slate-500 mt-1">最快 1.5s · 最慢 4.1s</p>
+          </div>
+        </div>
+
+        <!-- Report + Data Table -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Markdown Report -->
+          <div class="glass-card rounded-xl overflow-hidden">
+            <div class="px-5 py-3 border-b border-slate-700/50 bg-slate-800/40 flex items-center gap-2">
+              <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+              <span class="text-xs font-medium text-slate-300">评测报告</span>
+            </div>
+            <div class="p-5 text-sm leading-relaxed space-y-4 max-h-[480px] overflow-y-auto">
+              <h3 class="text-base font-bold text-white border-b border-slate-700/50 pb-2">评测报告摘要</h3>
+              <div>
+                <h4 class="text-sm font-semibold text-indigo-400 mb-1.5">总体表现</h4>
+                <p class="text-slate-300 text-sm leading-relaxed">本次评测覆盖 <strong class="text-white">4 个核心维度</strong>，针对 <strong class="text-white">GPT-4o、Claude-3.5、Gemini-Pro、Qwen-Max</strong> 四款模型进行了全面的能力对比。总计执行 <strong class="text-white">16 个测试用例</strong>，整体通过率达到 <strong class="text-emerald-400">87.5%</strong>。</p>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-indigo-400 mb-2">各维度得分</h4>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs">
+                    <thead><tr class="text-slate-400">
+                      <th class="text-left py-1.5 pr-2 font-medium">维度</th>
+                      <th class="text-center py-1.5 px-2 font-medium">GPT-4o</th>
+                      <th class="text-center py-1.5 px-2 font-medium">Claude</th>
+                      <th class="text-center py-1.5 px-2 font-medium">Gemini</th>
+                      <th class="text-center py-1.5 px-2 font-medium">Qwen</th>
+                    </tr></thead>
+                    <tbody class="text-slate-300">
+                      <tr class="border-t border-slate-800"><td class="py-1.5 pr-2 font-medium text-slate-200">语言理解</td><td class="text-center py-1.5 px-2 text-emerald-400 font-mono">95</td><td class="text-center py-1.5 px-2 font-mono">93</td><td class="text-center py-1.5 px-2 font-mono">89</td><td class="text-center py-1.5 px-2 font-mono">91</td></tr>
+                      <tr class="border-t border-slate-800"><td class="py-1.5 pr-2 font-medium text-slate-200">逻辑推理</td><td class="text-center py-1.5 px-2 text-emerald-400 font-mono">92</td><td class="text-center py-1.5 px-2 text-emerald-400 font-mono">94</td><td class="text-center py-1.5 px-2 font-mono">85</td><td class="text-center py-1.5 px-2 font-mono">88</td></tr>
+                      <tr class="border-t border-slate-800"><td class="py-1.5 pr-2 font-medium text-slate-200">代码生成</td><td class="text-center py-1.5 px-2 text-emerald-400 font-mono">97</td><td class="text-center py-1.5 px-2 font-mono">96</td><td class="text-center py-1.5 px-2 text-rose-400 font-mono">62</td><td class="text-center py-1.5 px-2 font-mono">88</td></tr>
+                      <tr class="border-t border-slate-800"><td class="py-1.5 pr-2 font-medium text-slate-200">创意写作</td><td class="text-center py-1.5 px-2 font-mono">91</td><td class="text-center py-1.5 px-2 text-emerald-400 font-mono">94</td><td class="text-center py-1.5 px-2 text-rose-400 font-mono">58</td><td class="text-center py-1.5 px-2 font-mono">85</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-indigo-400 mb-1.5">关键发现</h4>
+                <ol class="list-decimal list-inside text-slate-300 space-y-1.5 text-sm">
+                  <li><strong class="text-white">GPT-4o</strong> 在代码生成任务中表现最优（97分），展现出强大的编程理解能力。</li>
+                  <li><strong class="text-white">Claude-3.5</strong> 在创意写作和逻辑推理维度略胜一筹，综合表现均衡稳定。</li>
+                  <li><strong class="text-white">Gemini-Pro</strong> 在代码生成和创意写作维度存在明显短板，建议针对性优化。</li>
+                  <li><strong class="text-white">Qwen-Max</strong> 表现中规中矩，各维度无明显弱项，适合通用场景。</li>
+                </ol>
+              </div>
+              <div>
+                <h4 class="text-sm font-semibold text-indigo-400 mb-1.5">建议</h4>
+                <p class="text-slate-300 text-sm leading-relaxed">综合能力排名：<strong class="text-white">GPT-4o ≈ Claude-3.5 > Qwen-Max > Gemini-Pro</strong>。建议在生产环境中优先考虑 GPT-4o 用于代码相关任务，Claude-3.5 用于文本创作类任务。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Table -->
+          <div class="glass-card rounded-xl overflow-hidden flex flex-col">
+            <div class="px-5 py-3 border-b border-slate-700/50 bg-slate-800/40 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 0v1.5c0 .621-.504 1.125-1.125 1.125"/></svg>
+                <span class="text-xs font-medium text-slate-300">原始数据明细</span>
+              </div>
+              <button @click="exportReport()" class="btn-primary text-white text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                导出 CSV
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto max-h-[430px]">
+              <table class="w-full text-xs">
+                <thead class="sticky top-0 z-10">
+                  <tr class="bg-slate-800/90 backdrop-blur-sm">
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">#</th>
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">Query</th>
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">模型</th>
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">状态</th>
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">得分</th>
+                    <th class="text-left px-4 py-2.5 font-semibold text-slate-400 uppercase tracking-wider">耗时</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(row, i) in reportData" :key="i">
+                    <tr class="border-t border-slate-800/50 hover:bg-slate-800/20 transition-colors">
+                      <td class="px-4 py-2.5 text-slate-500 font-mono" x-text="row.id"></td>
+                      <td class="px-4 py-2.5 text-slate-300 max-w-[140px] truncate" x-text="row.query"></td>
+                      <td class="px-4 py-2.5">
+                        <span class="font-medium text-slate-300" x-text="row.model"></span>
+                      </td>
+                      <td class="px-4 py-2.5">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase"
+                              :class="row.status === 'pass' ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20' : 'bg-rose-500/15 text-rose-400 ring-1 ring-rose-500/20'"
+                              x-text="row.status === 'pass' ? '通过' : '未通过'"></span>
+                      </td>
+                      <td class="px-4 py-2.5 font-mono" :class="row.score >= 80 ? 'text-emerald-400' : 'text-rose-400'" x-text="row.score"></td>
+                      <td class="px-4 py-2.5 text-slate-400 font-mono" x-text="row.time"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-6 flex justify-start">
+          <button @click="goToStep(3)" class="text-sm font-medium text-slate-400 hover:text-slate-300 flex items-center gap-1.5 transition-colors group">
+            <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+            返回跑测
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ═══════════ TOAST ═══════════ -->
+    <div x-show="toast.show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-2"
+         class="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 shadow-xl shadow-black/20">
+      <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+      <span class="text-sm text-slate-200" x-text="toast.message"></span>
+    </div>
+  </div>
+
+  <!-- ═══════════ APP LOGIC ═══════════ -->
+  <script>
+    function evalApp() {
+      return {
+        step: 1,
+        maxStep: 1,
+
+        steps: [
+          { num: 1, label: '任务拆解' },
+          { num: 2, label: 'Query 扩充' },
+          { num: 3, label: '并发跑测' },
+          { num: 4, label: '智能报告' },
+        ],
+
+        taskInput: '',
+        decomposing: false,
+        taskDecomposed: false,
+        taskSchema: {
+          task_name: "大模型综合能力评测",
+          version: "1.0",
+          dimensions: [
+            { name: "语言理解", weight: 0.30, metrics: ["准确率", "F1分数", "语义相似度"] },
+            { name: "逻辑推理", weight: 0.25, metrics: ["推理准确率", "链式推理完整度"] },
+            { name: "代码生成", weight: 0.25, metrics: ["编译通过率", "测试通过率", "代码质量评分"] },
+            { name: "创意写作", weight: 0.20, metrics: ["流畅度", "创新性", "主题契合度"] }
+          ],
+          models: ["GPT-4o", "Claude-3.5", "Gemini-Pro", "Qwen-Max"],
+          config: { parallel_workers: 8, timeout_seconds: 30, retry_count: 2 }
+        },
+
+        queries: [
+          { id: 1, text: '请用中文总结以下英文论文的核心观点', category: '翻译总结', difficulty: '中等', source: 'manual', isNew: false },
+          { id: 2, text: '对比分析 GPT-4 和 Claude 在代码生成任务上的表现', category: '代码生成', difficulty: '困难', source: 'manual', isNew: false },
+          { id: 3, text: '解释量子计算的基本原理，适合高中生理解', category: '知识解释', difficulty: '简单', source: 'manual', isNew: false },
+        ],
+        expanding: false,
+        expandProgress: 0,
+        expanded: false,
+
+        testing: false,
+        testProgress: 0,
+        testGrid: [],
+        successCount: 0,
+        failCount: 0,
+        totalTests: 0,
+        testComplete: false,
+
+        displayTotal: 0,
+        displayRate: '0.0',
+        displayTime: '0.00',
+
+        toast: { show: false, message: '' },
+
+        reportData: [
+          { id: 1, query: '总结英文论文核心观点', model: 'GPT-4o', status: 'pass', score: 95, time: '1.8s' },
+          { id: 2, query: '总结英文论文核心观点', model: 'Claude-3.5', status: 'pass', score: 93, time: '2.1s' },
+          { id: 3, query: '总结英文论文核心观点', model: 'Gemini-Pro', status: 'pass', score: 89, time: '2.5s' },
+          { id: 4, query: '总结英文论文核心观点', model: 'Qwen-Max', status: 'pass', score: 91, time: '1.9s' },
+          { id: 5, query: '对比代码生成表现', model: 'GPT-4o', status: 'pass', score: 97, time: '3.2s' },
+          { id: 6, query: '对比代码生成表现', model: 'Claude-3.5', status: 'pass', score: 96, time: '2.8s' },
+          { id: 7, query: '对比代码生成表现', model: 'Gemini-Pro', status: 'fail', score: 62, time: '4.1s' },
+          { id: 8, query: '对比代码生成表现', model: 'Qwen-Max', status: 'pass', score: 88, time: '2.6s' },
+          { id: 9, query: '解释量子计算原理', model: 'GPT-4o', status: 'pass', score: 94, time: '1.5s' },
+          { id: 10, query: '解释量子计算原理', model: 'Claude-3.5', status: 'pass', score: 92, time: '1.7s' },
+          { id: 11, query: '解释量子计算原理', model: 'Gemini-Pro', status: 'pass', score: 90, time: '2.0s' },
+          { id: 12, query: '解释量子计算原理', model: 'Qwen-Max', status: 'pass', score: 88, time: '1.8s' },
+          { id: 13, query: '技术文档改写科普文章', model: 'GPT-4o', status: 'pass', score: 91, time: '2.4s' },
+          { id: 14, query: '技术文档改写科普文章', model: 'Claude-3.5', status: 'pass', score: 94, time: '2.2s' },
+          { id: 15, query: '技术文档改写科普文章', model: 'Gemini-Pro', status: 'fail', score: 58, time: '3.8s' },
+          { id: 16, query: '技术文档改写科普文章', model: 'Qwen-Max', status: 'pass', score: 85, time: '2.7s' },
+        ],
+
+        init() {
+          this.$watch('step', (val) => {
+            if (val === 4) {
+              this.$nextTick(() => this.animateMetrics());
+            }
+          });
+        },
+
+        goToStep(n) {
+          if (n >= 1 && n <= this.maxStep) {
+            this.step = n;
+          }
+        },
+
+        isStepUnlocked(n) {
+          return n <= this.maxStep;
+        },
+
+        isStepCompleted(n) {
+          if (n === 1) return this.taskDecomposed;
+          if (n === 2) return this.maxStep >= 3;
+          if (n === 3) return this.testComplete;
+          return false;
+        },
+
+        async decompose() {
+          if (!this.taskInput.trim() || this.decomposing) return;
+          this.decomposing = true;
+          await this.sleep(3000);
+          this.decomposing = false;
+          this.taskDecomposed = true;
+          this.maxStep = Math.max(this.maxStep, 2);
+        },
+
+        async expandQueries() {
+          if (this.expanding || this.expanded) return;
+          this.expanding = true;
+          this.expandProgress = 0;
+
+          const newQueries = [
+            { id: 4, text: '将一段技术文档改写为面向非技术人员的科普文章', category: '风格改写', difficulty: '中等', source: 'auto', isNew: true },
+            { id: 5, text: '根据给定数据集生成可视化图表的 Python 代码', category: '代码生成', difficulty: '困难', source: 'auto', isNew: true },
+            { id: 6, text: '对一篇新闻报道进行事实核查并标注可疑信息', category: '事实验证', difficulty: '困难', source: 'auto', isNew: true },
+            { id: 7, text: '创作一首关于人工智能的现代诗歌', category: '创意写作', difficulty: '简单', source: 'auto', isNew: true },
+          ];
+
+          await new Promise((resolve) => {
+            const interval = setInterval(() => {
+              this.expandProgress += 2;
+              if (this.expandProgress >= 100) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 35);
+          });
+
+          this.expanding = false;
+          this.expanded = true;
+
+          for (let i = 0; i < newQueries.length; i++) {
+            await this.sleep(300);
+            this.queries.push(newQueries[i]);
+            await this.sleep(100);
+          }
+
+          for (const q of this.queries) {
+            if (q.isNew) {
+              setTimeout(() => { q.isNew = false; }, 2000);
+            }
+          }
+        },
+
+        initTestGrid() {
+          const models = ['GPT-4o', 'Claude-3.5', 'Gemini-Pro', 'Qwen-Max'];
+          const testQueries = this.queries.slice(0, 4);
+          this.testGrid = [];
+          for (const q of testQueries) {
+            for (const m of models) {
+              this.testGrid.push({
+                query: q.text.length > 18 ? q.text.substring(0, 18) + '...' : q.text,
+                model: m,
+                status: 'pending'
+              });
+            }
+          }
+          this.totalTests = this.testGrid.length;
+        },
+
+        async startTesting() {
+          if (this.testing || this.testComplete) return;
+
+          this.initTestGrid();
+          this.testing = true;
+          this.testProgress = 0;
+          this.successCount = 0;
+          this.failCount = 0;
+
+          const indices = [...Array(this.totalTests).keys()];
+          for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+          }
+
+          for (let i = 0; i < indices.length; i++) {
+            const idx = indices[i];
+            this.testGrid[idx].status = 'running';
+            await this.sleep(250 + Math.random() * 350);
+            const pass = Math.random() > 0.125;
+            this.testGrid[idx].status = pass ? 'pass' : 'fail';
+            if (pass) this.successCount++;
+            else this.failCount++;
+            this.testProgress = Math.round(((i + 1) / this.totalTests) * 100);
+          }
+
+          this.testing = false;
+          this.testComplete = true;
+          this.maxStep = 4;
+
+          await this.sleep(900);
+          this.step = 4;
+        },
+
+        animateMetrics() {
+          this.displayTotal = 0;
+          this.displayRate = '0.0';
+          this.displayTime = '0.00';
+
+          const targetTotal = this.totalTests || 16;
+          const targetRate = this.totalTests ? ((this.successCount / this.totalTests) * 100) : 87.5;
+          const targetTime = 2.34;
+          const duration = 1200;
+          const start = performance.now();
+
+          const animate = (now) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            this.displayTotal = Math.round(targetTotal * ease);
+            this.displayRate = (targetRate * ease).toFixed(1);
+            this.displayTime = (targetTime * ease).toFixed(2);
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+        },
+
+        exportReport() {
+          this.showToast('报告已成功导出为 CSV 文件');
+        },
+
+        showToast(message) {
+          this.toast = { show: true, message };
+          setTimeout(() => { this.toast.show = false; }, 2500);
+        },
+
+        sleep(ms) {
+          return new Promise(r => setTimeout(r, ms));
+        },
+
+        syntaxHighlight(obj) {
+          let json = JSON.stringify(obj, null, 2);
+          json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return json.replace(
+            /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            function (match) {
+              let cls = 'text-amber-400';
+              if (/^"/.test(match)) {
+                cls = /:$/.test(match) ? 'text-indigo-400' : 'text-emerald-400';
+              } else if (/true|false/.test(match)) {
+                cls = 'text-rose-400';
+              } else if (/null/.test(match)) {
+                cls = 'text-slate-500';
+              }
+              return '<span class="' + cls + '">' + match + '</span>';
+            }
+          );
+        }
+      };
+    }
+  </script>
+</body>
+</html>

@@ -2,19 +2,21 @@
 
 ## Cursor Cloud specific instructions
 
-This repository is a newly initialized Node.js project (MIT licensed). As of the initial setup:
+This is a single-file front-end prototype for an LLM automated evaluation platform.
 
-- **Language/Runtime**: Node.js (v22 LTS available via nvm)
-- **Package managers available**: npm, pnpm, yarn
-- **No application code exists yet** — the repo contains only `.gitignore` (Node.js template) and `LICENSE`.
+- **Stack**: Single `index.html` using Tailwind CSS (CDN), Alpine.js (CDN), vanilla JS. No build step, no `package.json`, no dependencies to install.
+- **Runtime**: Node.js v22 LTS is available via nvm if needed for tooling.
 
-### When code is added
+### Running the app
 
-Once a `package.json` is added, run the appropriate install command (`npm install`, `pnpm install`, or `yarn install`) based on the lockfile present:
-- `package-lock.json` → `npm install`
-- `pnpm-lock.yaml` → `pnpm install`
-- `yarn.lock` → `yarn install`
+Serve `index.html` via any static HTTP server, for example:
+```
+npx http-server /workspace -p 3000 -c-1
+```
+Then open `http://localhost:3000/index.html` in a browser.
+
+Alternatively, the file can be opened directly in a browser (`file://` protocol) since it uses only CDN dependencies.
 
 ### Lint / Test / Build
 
-No lint, test, or build tooling is configured yet. Check `package.json` scripts once the project has source code.
+No lint, test, or build tooling is configured. This is a prototype-stage single-file app. If a `package.json` is added later, run the install command matching the lockfile (`package-lock.json` → `npm install`, `pnpm-lock.yaml` → `pnpm install`, `yarn.lock` → `yarn install`).
