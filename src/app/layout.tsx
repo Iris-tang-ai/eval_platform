@@ -4,11 +4,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: '新应用 | 扣子编程',
-    template: '%s | 扣子编程',
+    default: '评测任务管理系统',
+    template: '%s | 评测任务管理系统',
   },
   description:
-    '扣子编程是一款一站式云端 Vibe Coding 开发平台。通过对话轻松构建智能体、工作流和网站，实现从创意到上线的无缝衔接。',
+    '内部评测任务管理系统，提供任务创建、列表展示、状态追踪等核心功能。',
   keywords: [
     '扣子编程',
     'Coze Code',
