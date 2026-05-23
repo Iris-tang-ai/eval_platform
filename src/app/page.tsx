@@ -138,11 +138,11 @@ export default function TaskListPage() {
           </>
         ) : activeTab === 'manual' ? (
           <>
-            {/* 手工创建页面 */}
-            <main className="flex-1 overflow-auto">
-              <div className="max-w-2xl mx-auto px-8 py-8">
+            {/* 手工创建页面 - 全屏设计 */}
+            <main className="flex-1 overflow-auto bg-white">
+              <div className="h-full flex flex-col max-w-3xl mx-auto px-8 py-8">
                 <h2 className="text-lg font-semibold text-zinc-900 mb-6">手工创建任务</h2>
-                <div className="bg-white rounded-lg border border-zinc-200 p-6">
+                <div className="flex-1">
                   <ManualCreateForm
                     onSubmit={handleCreateTask}
                     onCancel={() => setActiveTab('list')}
@@ -153,11 +153,11 @@ export default function TaskListPage() {
           </>
         ) : (
           <>
-            {/* 自然语言创建页面 */}
-            <main className="flex-1 overflow-auto">
-              <div className="max-w-3xl mx-auto px-8 py-8">
+            {/* 自然语言创建页面 - 全屏设计 */}
+            <main className="flex-1 overflow-auto bg-white">
+              <div className="h-full flex flex-col max-w-4xl mx-auto px-8 py-8">
                 <h2 className="text-lg font-semibold text-zinc-900 mb-6">自然语言创建任务</h2>
-                <div className="bg-white rounded-lg border border-zinc-200 p-6">
+                <div className="flex-1">
                   <NaturalLanguageCreate
                     onSubmit={handleBatchCreateTasks}
                     onCancel={() => setActiveTab('list')}
