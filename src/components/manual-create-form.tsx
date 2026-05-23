@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CreateTaskForm, TaskType, TaskPriority, Dataset, TASK_TYPE_OPTIONS, PRIORITY_OPTIONS } from '@/types/task';
+import { CreateTaskForm, TaskType, TaskPriority, Dataset, ModelVersion, TASK_TYPE_OPTIONS, PRIORITY_OPTIONS } from '@/types/task';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { DatasetSelector } from '@/components/dataset-selector';
+import { ModelVersionSelector } from '@/components/model-version-selector';
 
 interface ManualCreateFormProps {
   onSubmit: (task: CreateTaskForm) => void;
@@ -27,6 +28,7 @@ export function ManualCreateForm({ onSubmit, onCancel }: ManualCreateFormProps) 
     priority: '中',
     description: '',
     dataset: undefined,
+    models: [],
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTaskForm, string>>>({});
 
@@ -128,6 +130,19 @@ export function ManualCreateForm({ onSubmit, onCancel }: ManualCreateFormProps) 
             value={formData.dataset}
             onChange={(dataset: Dataset | undefined) => 
               setFormData({ ...formData, dataset })
+            }
+          />
+        </div>
+
+        {/* 模型版本 */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            模型版本
+          </Label>
+          <ModelVersionSelector
+            value={formData.models || []}
+            onChange={(models: ModelVersion[]) => 
+              setFormData({ ...formData, models })
             }
           />
         </div>
