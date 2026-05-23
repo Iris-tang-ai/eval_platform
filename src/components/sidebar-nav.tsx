@@ -16,7 +16,7 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
 
   // 当选中子Tab时，自动展开
   useEffect(() => {
-    if (activeTab === 'manual' || activeTab === 'natural-language') {
+    if (activeTab === 'manual' || activeTab === 'natural-language' || activeTab === 'step-create') {
       setCreateExpanded(true);
     }
   }, [activeTab]);
@@ -38,7 +38,7 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
   };
 
   // 判断是否是新建任务下的子Tab被选中
-  const isCreateTabActive = activeTab === 'manual' || activeTab === 'natural-language';
+  const isCreateTabActive = activeTab === 'manual' || activeTab === 'natural-language' || activeTab === 'step-create';
 
   return (
     <nav className="w-[200px] bg-white border-r border-zinc-200 flex flex-col">
@@ -127,24 +127,23 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
                 </svg>
                 自然语言创建
               </button>
+
+              <button
+                onClick={handleStepCreateClick}
+                className={`w-full flex items-center gap-2 h-10 px-3 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
+                  activeTab === 'step-create'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-zinc-600 hover:bg-zinc-100'
+                }`}
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                步骤式创建
+              </button>
             </div>
           )}
         </div>
-
-        {/* 步骤式创建 */}
-        <button
-          onClick={handleStepCreateClick}
-          className={`w-full flex items-center gap-2 h-12 px-4 rounded-lg text-sm font-medium transition-colors duration-150 ${
-            activeTab === 'step-create'
-              ? 'bg-violet-600 text-white'
-              : 'text-zinc-600 hover:bg-zinc-100'
-          }`}
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-          步骤式创建
-        </button>
       </div>
     </nav>
   );
