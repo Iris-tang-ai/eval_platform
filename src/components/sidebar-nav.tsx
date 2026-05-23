@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { SidebarTab } from '@/types/task';
 
 interface SidebarNavProps {
@@ -9,6 +10,7 @@ interface SidebarNavProps {
 }
 
 export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
+  const router = useRouter();
   // 新建任务是否展开
   const [createExpanded, setCreateExpanded] = useState(false);
 
@@ -27,6 +29,12 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
     } else {
       setCreateExpanded(false);
     }
+  };
+
+  // 点击步骤式创建
+  const handleStepCreateClick = () => {
+    onTabChange('step-create');
+    router.push('/evaluation/create');
   };
 
   // 判断是否是新建任务下的子Tab被选中
@@ -122,6 +130,21 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
             </div>
           )}
         </div>
+
+        {/* 步骤式创建 */}
+        <button
+          onClick={handleStepCreateClick}
+          className={`w-full flex items-center gap-2 h-12 px-4 rounded-lg text-sm font-medium transition-colors duration-150 ${
+            activeTab === 'step-create'
+              ? 'bg-violet-600 text-white'
+              : 'text-zinc-600 hover:bg-zinc-100'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          步骤式创建
+        </button>
       </div>
     </nav>
   );

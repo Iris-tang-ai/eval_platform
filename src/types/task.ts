@@ -99,7 +99,7 @@ export const STATUS_FILTER_OPTIONS: StatusFilter[] = [
 ];
 
 // 侧边栏Tab类型
-export type SidebarTab = 'list' | 'manual' | 'natural-language';
+export type SidebarTab = 'list' | 'manual' | 'natural-language' | 'step-create';
 
 // 模型状态选项
 export const MODEL_STATUS_LABELS: Record<ModelStatus, string> = {
