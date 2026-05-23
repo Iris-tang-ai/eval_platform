@@ -16,6 +16,29 @@ export type TaskStatus =
 // 任务优先级枚举
 export type TaskPriority = '高' | '中' | '低';
 
+// 数据集上传方式
+export type DatasetUploadType = 'local' | 'cloud';
+
+// 本地上传的数据集
+export interface LocalDataset {
+  type: 'local';
+  file: File;
+  name: string;
+  size: number;
+}
+
+// 云端数据集
+export interface CloudDataset {
+  type: 'cloud';
+  id: string;
+  name: string;
+  size: number;
+  createdAt: Date;
+}
+
+// 数据集类型（联合类型）
+export type Dataset = LocalDataset | CloudDataset;
+
 // 任务数据类型
 export interface Task {
   id: string;
@@ -26,6 +49,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   description?: string;
+  dataset?: Dataset;
 }
 
 // 新建任务表单数据
@@ -34,6 +58,7 @@ export interface CreateTaskForm {
   type: TaskType;
   priority: TaskPriority;
   description?: string;
+  dataset?: Dataset;
 }
 
 // 状态筛选选项
