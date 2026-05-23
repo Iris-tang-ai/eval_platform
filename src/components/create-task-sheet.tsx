@@ -1,187 +1,107 @@
 'use client';
 
 import { useState } from 'react';
-import { CreateTaskForm, TaskType, TaskPriority, TASK_TYPE_OPTIONS, PRIORITY_OPTIONS } from '@/types/task';
-import { generateId } from '@/lib/task-utils';
+import { Task, CreateTaskForm } from '@/types/task';
+import { ManualCreateForm } from './manual-create-form';
+import { NaturalLanguageCreate } from './natural-language-create';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+
+type CreateMode = 'manual' | 'natural-language';
 
 interface CreateTaskSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (task: CreateTaskForm) => void;
+  onBatchSubmit?: (tasks: Task[]) => void;
 }
 
-export function CreateTaskSheet({ open, onOpenChange, onSubmit }: CreateTaskSheetProps) {
-  const [formData, setFormData] = useState<CreateTaskForm>({
-    name: '',
-    type: '大模型评测',
-    priority: '中',
-    description: '',
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateTaskForm, string>>>({});
+export function CreateTaskSheet({ open, onOpenChange, onSubmit, onBatchSubmit }: CreateTaskSheetProps) {
+  const [mode, setMode] = useState<CreateMode>('manual');
 
-  // 重置表单
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      type: '大模型评测',
-      priority: '中',
-      description: '',
-    });
-    setErrors({});
+  // 关闭时重置模式
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      setMode('manual');
+    }
+    onOpenChange(newOpen);
   };
 
-  // 验证表单
-  const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof CreateTaskForm, string>> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = '请输入任务名称';
-    } else if (formData.name.length > 100) {
-      newErrors.name = '任务名称不能超过100个字符';
-    }
-
-    if (formData.description && formData.description.length > 500) {
-      newErrors.description = '描述不能超过500个字符';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // 手工创建提交
+  const handleManualSubmit = (formData: CreateTaskForm) => {
+    onSubmit(formData);
+    onOpenChange(false);
   };
 
-  // 提交表单
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit(formData);
-      resetForm();
-      onOpenChange(false);
+  // 自然语言创建提交（批量）
+  const handleNaturalLanguageSubmit = (tasks: Task[]) => {
+    if (onBatchSubmit) {
+      onBatchSubmit(tasks);
     }
+    onOpenChange(false);
   };
 
   // 取消操作
   const handleCancel = () => {
-    resetForm();
     onOpenChange(false);
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px]">
+    <Sheet open={open} onOpenChange={handleOpenChange}>
+      <SheetContent className={`w-[${mode === 'natural-language' ? '480px' : '400px'}] max-w-[90vw]`}>
         <SheetHeader>
           <SheetTitle className="text-lg font-semibold">新建任务</SheetTitle>
         </SheetHeader>
 
-        <div className="py-6 space-y-6">
-          {/* 任务名称 */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              任务名称 <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="请输入任务名称"
-              className={`h-10 ${errors.name ? 'border-red-500' : ''}`}
-            />
-            {errors.name && (
-              <p className="text-xs text-red-500">{errors.name}</p>
-            )}
-          </div>
-
-          {/* 任务类型 */}
-          <div className="space-y-2">
-            <Label htmlFor="type" className="text-sm font-medium">
-              任务类型 <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => setFormData({ ...formData, type: value as TaskType })}
-            >
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="请选择任务类型" />
-              </SelectTrigger>
-              <SelectContent>
-                {TASK_TYPE_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 优先级 */}
-          <div className="space-y-2">
-            <Label htmlFor="priority" className="text-sm font-medium">
-              优先级 <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.priority}
-              onValueChange={(value) => setFormData({ ...formData, priority: value as TaskPriority })}
-            >
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="请选择优先级" />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITY_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 描述 */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              描述
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="请输入任务描述（选填）"
-              rows={4}
-              className={`resize-none ${errors.description ? 'border-red-500' : ''}`}
-            />
-            <div className="flex justify-between items-center">
-              {errors.description && (
-                <p className="text-xs text-red-500">{errors.description}</p>
-              )}
-              <p className="text-xs text-zinc-400 ml-auto">
-                {formData.description?.length || 0}/500
-              </p>
-            </div>
-          </div>
+        {/* 模式切换Tab */}
+        <div className="flex gap-1 mt-4 p-1 bg-zinc-100 rounded-lg">
+          <button
+            onClick={() => setMode('manual')}
+            className={`flex-1 flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition-all duration-150 ${
+              mode === 'manual'
+                ? 'bg-white text-zinc-900 shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+            手工创建
+          </button>
+          <button
+            onClick={() => setMode('natural-language')}
+            className={`flex-1 flex items-center justify-center gap-2 h-9 rounded-md text-sm font-medium transition-all duration-150 ${
+              mode === 'natural-language'
+                ? 'bg-white text-zinc-900 shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            自然语言创建
+          </button>
         </div>
 
-        <SheetFooter className="gap-2">
-          <Button variant="outline" onClick={handleCancel}>
-            取消
-          </Button>
-          <Button onClick={handleSubmit} className="bg-zinc-900 hover:bg-zinc-800">
-            创建
-          </Button>
-        </SheetFooter>
+        {/* 内容区域 */}
+        <div className="mt-4 h-[calc(100vh-200px)] overflow-hidden">
+          {mode === 'manual' ? (
+            <ManualCreateForm
+              onSubmit={handleManualSubmit}
+              onCancel={handleCancel}
+            />
+          ) : (
+            <NaturalLanguageCreate
+              onSubmit={handleNaturalLanguageSubmit}
+              onCancel={handleCancel}
+            />
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );

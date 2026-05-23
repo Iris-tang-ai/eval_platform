@@ -66,6 +66,12 @@ export default function TaskListPage() {
     toast.success('任务创建成功');
   };
 
+  // 批量新建任务（自然语言创建）
+  const handleBatchCreateTasks = (newTasks: Task[]) => {
+    setTasks((prev) => [...newTasks, ...prev]);
+    toast.success(`成功创建 ${newTasks.length} 个任务`);
+  };
+
   // 查看任务详情
   const handleViewDetail = (task: Task) => {
     setSelectedTask(task);
@@ -139,6 +145,7 @@ export default function TaskListPage() {
         open={createSheetOpen}
         onOpenChange={setCreateSheetOpen}
         onSubmit={handleCreateTask}
+        onBatchSubmit={handleBatchCreateTasks}
       />
 
       {/* 任务详情抽屉 */}
