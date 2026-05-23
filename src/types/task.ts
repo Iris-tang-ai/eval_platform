@@ -58,3 +58,6 @@ export const STATUS_FILTER_OPTIONS: StatusFilter[] = [
   '已完成',
   '已失败',
 ];
+
+// 侧边栏Tab类型
+export type SidebarTab = 'list' | 'create';
