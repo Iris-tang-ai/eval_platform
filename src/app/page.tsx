@@ -5,7 +5,7 @@ import { Task, StatusFilter, CreateTaskForm } from '@/types/task';
 import { mockTasks, generateId } from '@/lib/task-utils';
 import { TaskCard } from '@/components/task-card';
 import { TaskFilters } from '@/components/task-filters';
-import { CreateTaskSheet } from '@/components/create-task-sheet';
+import { CreateTaskDialog } from '@/components/create-task-dialog';
 import { TaskDetailSheet } from '@/components/task-detail-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,8 +140,8 @@ export default function TaskListPage() {
         )}
       </main>
 
-      {/* 新建任务抽屉 */}
-      <CreateTaskSheet
+      {/* 新建任务对话框 */}
+      <CreateTaskDialog
         open={createSheetOpen}
         onOpenChange={setCreateSheetOpen}
         onSubmit={handleCreateTask}
