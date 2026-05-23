@@ -12,14 +12,9 @@ import { TaskDetailSheet } from '@/components/task-detail-sheet';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
-type CreateMode = 'manual' | 'natural-language';
-
 export default function TaskListPage() {
   // 当前Tab
   const [activeTab, setActiveTab] = useState<SidebarTab>('list');
-  
-  // 创建模式
-  const [createMode, setCreateMode] = useState<CreateMode>('manual');
   
   // 任务列表状态
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
@@ -141,55 +136,32 @@ export default function TaskListPage() {
               </div>
             </main>
           </>
+        ) : activeTab === 'manual' ? (
+          <>
+            {/* 手工创建页面 */}
+            <main className="flex-1 overflow-auto">
+              <div className="max-w-2xl mx-auto px-8 py-8">
+                <h2 className="text-lg font-semibold text-zinc-900 mb-6">手工创建任务</h2>
+                <div className="bg-white rounded-lg border border-zinc-200 p-6">
+                  <ManualCreateForm
+                    onSubmit={handleCreateTask}
+                    onCancel={() => setActiveTab('list')}
+                  />
+                </div>
+              </div>
+            </main>
+          </>
         ) : (
           <>
-            {/* 新建任务页面 */}
+            {/* 自然语言创建页面 */}
             <main className="flex-1 overflow-auto">
               <div className="max-w-3xl mx-auto px-8 py-8">
-                {/* 模式切换Tab */}
-                <div className="flex gap-1 p-1 bg-zinc-100 rounded-lg mb-6">
-                  <button
-                    onClick={() => setCreateMode('manual')}
-                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-md text-sm font-medium transition-all duration-150 ${
-                      createMode === 'manual'
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-700'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    手工创建
-                  </button>
-                  <button
-                    onClick={() => setCreateMode('natural-language')}
-                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-md text-sm font-medium transition-all duration-150 ${
-                      createMode === 'natural-language'
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-700'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    自然语言创建
-                  </button>
-                </div>
-
-                {/* 创建表单 */}
+                <h2 className="text-lg font-semibold text-zinc-900 mb-6">自然语言创建任务</h2>
                 <div className="bg-white rounded-lg border border-zinc-200 p-6">
-                  {createMode === 'manual' ? (
-                    <ManualCreateForm
-                      onSubmit={handleCreateTask}
-                      onCancel={() => setActiveTab('list')}
-                    />
-                  ) : (
-                    <NaturalLanguageCreate
-                      onSubmit={handleBatchCreateTasks}
-                      onCancel={() => setActiveTab('list')}
-                    />
-                  )}
+                  <NaturalLanguageCreate
+                    onSubmit={handleBatchCreateTasks}
+                    onCancel={() => setActiveTab('list')}
+                  />
                 </div>
               </div>
             </main>

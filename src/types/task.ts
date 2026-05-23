@@ -60,4 +60,4 @@ export const STATUS_FILTER_OPTIONS: StatusFilter[] = [
 ];
 
 // 侧边栏Tab类型
-export type SidebarTab = 'list' | 'create';
+export type SidebarTab = 'list' | 'manual' | 'natural-language';
