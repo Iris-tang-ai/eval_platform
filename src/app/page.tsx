@@ -84,16 +84,16 @@ export default function TaskListPage() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50">
-      {/* 左侧导航 */}
+    <div className="min-h-screen bg-zinc-50">
+      {/* 左侧导航 - 固定定位 */}
       <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* 右侧内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* 右侧内容区 - 左边距200px */}
+      <div className="ml-[200px] flex flex-col min-h-screen">
         {activeTab === 'list' ? (
           <>
             {/* 任务列表页面 */}
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto min-h-screen">
               <div className="max-w-6xl mx-auto px-8 py-8">
                 {/* 工具栏区域 */}
                 <div className="mb-6 space-y-4">
@@ -139,7 +139,7 @@ export default function TaskListPage() {
         ) : activeTab === 'manual' ? (
           <>
             {/* 手工创建页面 - 全屏设计 */}
-            <main className="flex-1 overflow-auto bg-white">
+            <main className="flex-1 overflow-auto bg-white min-h-screen">
               <div className="h-full flex flex-col max-w-3xl mx-auto px-8 py-8">
                 <h2 className="text-lg font-semibold text-zinc-900 mb-6">手工创建任务</h2>
                 <div className="flex-1">
@@ -154,7 +154,7 @@ export default function TaskListPage() {
         ) : (
           <>
             {/* 自然语言创建页面 - 全屏设计 */}
-            <main className="flex-1 overflow-auto bg-white">
+            <main className="flex-1 overflow-auto bg-white min-h-screen">
               <div className="h-full flex flex-col max-w-4xl mx-auto px-8 py-8">
                 <h2 className="text-lg font-semibold text-zinc-900 mb-6">自然语言创建任务</h2>
                 <div className="flex-1">

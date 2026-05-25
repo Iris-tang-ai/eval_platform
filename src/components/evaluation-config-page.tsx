@@ -100,16 +100,16 @@ export function EvaluationConfigPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="ml-[200px] min-h-screen bg-slate-50 flex flex-col">
       {/* Top Navigation - Stepper */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Stepper steps={evaluationSteps} currentStep={1} />
-        </div>
-      </header>
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Stepper steps={evaluationSteps} currentStep={1} />
+          </div>
+        </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
           
           {/* Left Column - AI Intent & Goal Configuration (60%) */}
@@ -409,7 +409,7 @@ export function EvaluationConfigPage() {
       </main>
 
       {/* Bottom Sticky Bar */}
-      <footer className="sticky bottom-0 z-50 bg-white/80 backdrop-blur-md border-t border-slate-200">
+      <footer className="sticky bottom-0 z-30 bg-white/80 backdrop-blur-md border-t border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Left: Back Button */}

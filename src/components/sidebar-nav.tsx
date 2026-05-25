@@ -41,7 +41,7 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
   const isCreateTabActive = activeTab === 'manual' || activeTab === 'natural-language' || activeTab === 'step-create';
 
   return (
-    <nav className="w-[200px] bg-white border-r border-zinc-200 flex flex-col">
+    <nav className="fixed left-0 top-0 bottom-0 w-[200px] bg-white border-r border-zinc-200 flex flex-col z-50">
       {/* Logo区域 */}
       <div className="h-16 px-4 flex items-center gap-3 border-b border-zinc-200">
         <div className="w-8 h-8 bg-zinc-900 rounded-md flex items-center justify-center">
