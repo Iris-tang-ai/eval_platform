@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Task, StatusFilter, CreateTaskForm, SidebarTab } from '@/types/task';
 import { mockTasks, generateId } from '@/lib/task-utils';
 import { SidebarNav } from '@/components/sidebar-nav';
@@ -13,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
 export default function TaskListPage() {
+  const searchParams = useSearchParams();
+  
   // 当前Tab
   const [activeTab, setActiveTab] = useState<SidebarTab>('list');
   
@@ -28,6 +31,37 @@ export default function TaskListPage() {
   // 详情抽屉状态
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // 从localStorage读取步骤式创建的新任务
+  useEffect(() => {
+    const refresh = searchParams.get('refresh');
+    if (refresh === 'true') {
+      const storedTasks = localStorage.getItem('newEvaluationTasks');
+      if (storedTasks) {
+        try {
+          const newTasks = JSON.parse(storedTasks);
+          const convertedTasks: Task[] = newTasks.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            type: t.type || 'model-evaluation',
+            creator: '步骤式创建',
+            createdAt: new Date(t.createdAt),
+            status: '待执行' as const,
+            priority: t.priority || 'high',
+            description: t.description,
+          }));
+          
+          setTasks(prev => [...convertedTasks, ...prev]);
+          toast.success(`成功创建 ${convertedTasks.length} 个评测任务`);
+          
+          // 清除localStorage
+          localStorage.removeItem('newEvaluationTasks');
+        } catch (e) {
+          console.error('Failed to parse new tasks:', e);
+        }
+      }
+    }
+  }, [searchParams]);
 
   // 过滤后的任务列表
   const filteredTasks = useMemo(() => {

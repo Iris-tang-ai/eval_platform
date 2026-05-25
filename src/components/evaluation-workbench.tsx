@@ -110,9 +110,36 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
     router.push('/evaluation/create');
   };
 
-  // 进入第三步
+  // 开始执行评测 - 创建任务并跳转到任务列表
   const handleNext = () => {
-    router.push('/evaluation/report');
+    // 创建新任务
+    const newTask = {
+      id: `task-${Date.now()}`,
+      name: `评测任务 - ${config.goal.slice(0, 30)}...`,
+      type: 'model-evaluation' as const,
+      status: 'pending' as const,
+      priority: 'high' as const,
+      createdAt: new Date().toISOString(),
+      description: `目标模型: ${config.targetModels.join(', ')}\n评测维度: ${config.dimensions.length}个\n测试用例: ${config.totalTestCount}条`,
+      // 附加评测配置信息
+      evaluationConfig: {
+        goal: config.goal,
+        targetModels: config.targetModels,
+        dimensions: config.dimensions.map(d => ({
+          name: d.name,
+          testCount: d.testCount,
+        })),
+        totalTestCount: config.totalTestCount,
+      },
+    };
+
+    // 保存到localStorage
+    const existingTasks = JSON.parse(localStorage.getItem('newEvaluationTasks') || '[]');
+    existingTasks.push(newTask);
+    localStorage.setItem('newEvaluationTasks', JSON.stringify(existingTasks));
+
+    // 跳转到任务列表
+    router.push('/?refresh=true');
   };
 
   return (
