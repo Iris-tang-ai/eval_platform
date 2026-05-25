@@ -46,7 +46,6 @@ import {
   DollarSign,
   Database,
 } from 'lucide-react';
-import { Stepper } from './stepper';
 import { SidebarNav } from './sidebar-nav';
 import {
   EvaluationSummary,
@@ -141,21 +140,18 @@ export default function EvaluationReport() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 固定左侧导航 */}
-      <SidebarNav activeTab="step-create" onTabChange={(tab: SidebarTab) => {
-        if (tab !== 'step-create') {
+      <SidebarNav activeTab="report" onTabChange={(tab: SidebarTab) => {
+        if (tab !== 'report') {
           router.push('/');
         }
       }} />
       
       {/* 主内容区 */}
       <div className="ml-[200px]">
-        {/* 顶部步骤条 */}
-        <div className="bg-white border-b border-slate-200 px-8 py-4">
-          <Stepper currentStep={3} steps={[
-            { id: 1, title: '配置评测目标' },
-            { id: 2, title: '能力评测工作台' },
-            { id: 3, title: '可视化洞察报告' },
-          ]} />
+        {/* 顶部标题 */}
+        <div className="bg-white border-b border-slate-200 px-8 py-6">
+          <h1 className="text-2xl font-semibold text-slate-900">可视化评测报告</h1>
+          <p className="text-slate-500 mt-1">查看已完成评测任务的详细结果与分析</p>
         </div>
 
         <div className="p-8">

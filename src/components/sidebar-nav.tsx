@@ -69,6 +69,27 @@ export function SidebarNav({ activeTab, onTabChange }: SidebarNavProps) {
           任务列表
         </button>
 
+        {/* 可视化报告 */}
+        <button
+          onClick={() => {
+            onTabChange('report');
+            router.push('/evaluation/report');
+          }}
+          className={`w-full flex items-center gap-2 h-12 px-4 rounded-lg text-sm font-medium transition-colors duration-150 ${
+            activeTab === 'report'
+              ? 'bg-zinc-900 text-white'
+              : 'text-zinc-600 hover:bg-zinc-100'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 3v18h18" />
+            <path d="M18 17V9" />
+            <path d="M13 17V5" />
+            <path d="M8 17v-3" />
+          </svg>
+          可视化报告
+        </button>
+
         {/* 新建任务（可展开） */}
         <div className="space-y-1">
           <button

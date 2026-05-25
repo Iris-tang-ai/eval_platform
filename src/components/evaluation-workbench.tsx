@@ -110,7 +110,7 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
     router.push('/evaluation/create');
   };
 
-  // 开始执行评测 - 创建任务并跳转到报告页面
+  // 完成创建 - 创建任务并跳转到任务列表
   const handleNext = () => {
     // 创建新任务
     const newTask = {
@@ -139,8 +139,8 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
     existingTasks.push(newTask);
     localStorage.setItem('newEvaluationTasks', JSON.stringify(existingTasks));
 
-    // 跳转到可视化报告页面
-    router.push('/evaluation/report');
+    // 跳转到任务列表
+    router.push('/?refresh=true');
   };
 
   return (
@@ -303,7 +303,7 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
             className="bg-slate-900 hover:bg-slate-800 text-white"
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            开始执行评测
+            完成创建
           </Button>
         </div>
       </div>

@@ -92,8 +92,4 @@ export const evaluationSteps: Step[] = [{
     id: 2,
     title: "能力评测工作台",
     description: "配置评测维度"
-}, {
-    id: 3,
-    title: "可视化洞察报告",
-    description: "查看评测结果"
 }];
