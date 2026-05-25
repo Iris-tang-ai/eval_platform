@@ -138,7 +138,7 @@ export function EvaluationConfigPage() {
                     className={cn(
                       "w-full h-40 px-4 py-3 text-sm rounded-lg border border-slate-200",
                       "placeholder:text-slate-400 placeholder:leading-relaxed",
-                      "focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent",
+                      "focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent",
                       "transition-all duration-200 resize-none"
                     )}
                   />
@@ -154,8 +154,8 @@ export function EvaluationConfigPage() {
                         onClick={() => handlePromptStarterClick(starter.text)}
                         className={cn(
                           "px-3 py-1.5 text-xs font-medium rounded-full",
-                          "bg-slate-100 text-slate-600 hover:bg-violet-100 hover:text-violet-700",
-                          "border border-slate-200 hover:border-violet-300",
+                          "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-700",
+                          "border border-slate-200 hover:border-slate-300",
                           "transition-all duration-200 cursor-pointer"
                         )}
                       >
@@ -180,7 +180,7 @@ export function EvaluationConfigPage() {
                         <Badge
                           key={model.id}
                           variant="secondary"
-                          className="px-3 py-1.5 bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100"
+                          className="px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
                         >
                           <span
                             className="w-2 h-2 rounded-full mr-2"
@@ -189,7 +189,7 @@ export function EvaluationConfigPage() {
                           {model.name}
                           <button
                             onClick={() => handleModelToggle(model.id)}
-                            className="ml-2 hover:text-violet-900"
+                            className="ml-2 hover:text-slate-900"
                           >
                             ×
                           </button>
@@ -205,7 +205,7 @@ export function EvaluationConfigPage() {
                       className={cn(
                         "w-full px-4 py-2.5 text-left text-sm rounded-lg",
                         "border border-slate-200 bg-white",
-                        "hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-violet-500",
+                        "hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400",
                         "transition-all duration-200 flex items-center justify-between"
                       )}
                     >
@@ -230,7 +230,7 @@ export function EvaluationConfigPage() {
                               "w-full px-4 py-2.5 text-left text-sm",
                               "flex items-center gap-3",
                               "hover:bg-slate-50 transition-colors duration-150",
-                              selectedModels.includes(model.id) && "bg-violet-50"
+                              selectedModels.includes(model.id) && "bg-slate-100"
                             )}
                           >
                             <span
@@ -239,12 +239,12 @@ export function EvaluationConfigPage() {
                             />
                             <span className={cn(
                               "flex-1",
-                              selectedModels.includes(model.id) ? "text-violet-700 font-medium" : "text-slate-700"
+                              selectedModels.includes(model.id) ? "text-slate-900 font-medium" : "text-slate-700"
                             )}>
                               {model.name}
                             </span>
                             {selectedModels.includes(model.id) && (
-                              <Check className="h-4 w-4 text-violet-600" />
+                              <Check className="h-4 w-4 text-slate-600" />
                             )}
                           </button>
                         ))}
@@ -268,7 +268,7 @@ export function EvaluationConfigPage() {
                 <div className={cn(
                   "border-2 border-dashed border-slate-200 rounded-lg",
                   "p-6 text-center",
-                  "hover:border-violet-300 hover:bg-violet-50/30",
+                  "hover:border-slate-400 hover:bg-slate-50",
                   "transition-all duration-200 cursor-pointer"
                 )}>
                   <UploadCloud className="h-8 w-8 mx-auto text-slate-400 mb-2" />
@@ -306,13 +306,13 @@ export function EvaluationConfigPage() {
             {/* Card 2: AI Dataset Auto-Extension */}
             <div className={cn(
               "rounded-xl border shadow-sm overflow-hidden",
-              "bg-gradient-to-br from-violet-50/50 to-indigo-50/30",
-              "border-violet-200/50"
+              "bg-slate-50",
+              "border-slate-200"
             )}>
               {/* Header with Toggle */}
-              <div className="px-5 py-4 border-b border-violet-100/50 flex items-center justify-between">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-600" />
+                  <Sparkles className="h-4 w-4 text-slate-600" />
                   <h3 className="text-sm font-semibold text-slate-900">AI 数据集智能扩展</h3>
                 </div>
                 <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ export function EvaluationConfigPage() {
                       <label className="text-sm font-medium text-slate-700">
                         扩展比例
                       </label>
-                      <Badge variant="secondary" className="bg-violet-100 text-violet-700 font-mono">
+                      <Badge variant="secondary" className="bg-slate-200 text-slate-700 font-mono">
                         {expandRatio}x
                       </Badge>
                     </div>
@@ -368,7 +368,7 @@ export function EvaluationConfigPage() {
                               "flex items-start gap-3 p-3 rounded-lg cursor-pointer",
                               "border transition-all duration-200",
                               selectedStrategies.includes(strategy.id)
-                                ? "border-violet-300 bg-violet-50/50"
+                                ? "border-slate-400 bg-slate-100"
                                 : "border-slate-200 hover:border-slate-300"
                             )}
                           >
@@ -376,13 +376,13 @@ export function EvaluationConfigPage() {
                               type="checkbox"
                               checked={selectedStrategies.includes(strategy.id)}
                               onChange={() => handleStrategyToggle(strategy.id)}
-                              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
                             />
                             <div className="flex-1">
                               <span className={cn(
                                 "text-sm",
                                 selectedStrategies.includes(strategy.id)
-                                  ? "text-violet-700 font-medium"
+                                  ? "text-slate-900 font-medium"
                                   : "text-slate-700"
                               )}>
                                 {strategy.label}
@@ -425,10 +425,9 @@ export function EvaluationConfigPage() {
             <Button
               className={cn(
                 "px-6 py-2.5 text-sm font-medium",
-                "bg-gradient-to-r from-violet-600 to-indigo-600",
-                "hover:from-violet-700 hover:to-indigo-700",
-                "text-white rounded-lg shadow-lg shadow-violet-500/25",
-                "hover:shadow-xl hover:shadow-violet-500/30",
+                "bg-slate-900 hover:bg-slate-800",
+                "text-white rounded-lg shadow-lg shadow-slate-500/20",
+                "hover:shadow-xl hover:shadow-slate-500/30",
                 "hover:scale-105",
                 "transition-all duration-200"
               )}

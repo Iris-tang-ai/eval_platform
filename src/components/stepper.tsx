@@ -36,8 +36,8 @@ export function Stepper(
                                 <div
                                     className={cn(
                                         "relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200",
-                                        isCompleted && "bg-violet-600 text-white",
-                                        isCurrent && "bg-violet-600 text-white ring-4 ring-violet-600/20",
+                                        isCompleted && "bg-slate-900 text-white",
+                                        isCurrent && "bg-slate-900 text-white ring-4 ring-slate-900/20",
                                         !isCompleted && !isCurrent && "bg-slate-200 text-slate-500"
                                     )}
                                     style={{
@@ -47,8 +47,8 @@ export function Stepper(
                                     {}
                                     {isCurrent && <span className="absolute -right-1 -top-1 flex h-3 w-3">
                                         <span
-                                            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
-                                        <span className="relative inline-flex h-3 w-3 rounded-full bg-violet-500" />
+                                            className="absolute inline-flex h-full w-full animate-ping rounded-full bg-slate-400 opacity-75" />
+                                        <span className="relative inline-flex h-3 w-3 rounded-full bg-slate-500" />
                                     </span>}
                                 </div>
                                 {}
@@ -56,7 +56,7 @@ export function Stepper(
                                     <p
                                         className={cn(
                                             "text-sm font-medium transition-colors duration-200",
-                                            isCurrent && "text-violet-600",
+                                            isCurrent && "text-slate-900",
                                             isCompleted && "text-slate-700",
                                             !isCompleted && !isCurrent && "text-slate-400"
                                         )}>
@@ -68,13 +68,13 @@ export function Stepper(
                                 </div>
                                 {}
                                 {isCurrent && <div
-                                    className="mt-2 h-0.5 w-16 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600" />}
+                                    className="mt-2 h-0.5 w-16 rounded-full bg-slate-900" />}
                             </div>
                             {}
                             {!isLast && <div
                                 className={cn(
                                     "mx-2 sm:mx-4 h-0.5 w-8 sm:w-16 rounded-full transition-colors duration-200",
-                                    isCompleted ? "bg-violet-300" : "bg-slate-200"
+                                    isCompleted ? "bg-slate-400" : "bg-slate-200"
                                 )} />}
                         </li>
                     );
