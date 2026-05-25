@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { 
   Sparkles, 
@@ -65,6 +66,7 @@ const mockUploadedFile = {
 };
 
 export function EvaluationConfigPage() {
+  const router = useRouter();
   // State
   const [goalText, setGoalText] = useState("");
   const [selectedModels, setSelectedModels] = useState<string[]>(["gpt-4o"]);
@@ -423,6 +425,7 @@ export function EvaluationConfigPage() {
 
             {/* Right: Primary Action */}
             <Button
+              onClick={() => router.push('/evaluation/workbench')}
               className={cn(
                 "px-6 py-2.5 text-sm font-medium",
                 "bg-slate-900 hover:bg-slate-800",
