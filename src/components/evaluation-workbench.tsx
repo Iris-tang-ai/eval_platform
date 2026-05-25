@@ -110,16 +110,17 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
     router.push('/evaluation/create');
   };
 
-  // 开始执行评测 - 创建任务并跳转到任务列表
+  // 开始执行评测 - 创建任务并跳转到报告页面
   const handleNext = () => {
     // 创建新任务
     const newTask = {
-      id: `task-${Date.now()}`,
+      id: `eval-${Date.now()}`,
       name: `评测任务 - ${config.goal.slice(0, 30)}...`,
       type: 'model-evaluation' as const,
-      status: 'pending' as const,
+      status: 'completed' as const, // 模拟已完成状态
       priority: 'high' as const,
       createdAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
       description: `目标模型: ${config.targetModels.join(', ')}\n评测维度: ${config.dimensions.length}个\n测试用例: ${config.totalTestCount}条`,
       // 附加评测配置信息
       evaluationConfig: {
@@ -133,13 +134,13 @@ export function EvaluationWorkbench({ config = MOCK_EVALUATION_CONFIG }: Evaluat
       },
     };
 
-    // 保存到localStorage
+    // 保存到localStorage（用于任务列表显示）
     const existingTasks = JSON.parse(localStorage.getItem('newEvaluationTasks') || '[]');
     existingTasks.push(newTask);
     localStorage.setItem('newEvaluationTasks', JSON.stringify(existingTasks));
 
-    // 跳转到任务列表
-    router.push('/?refresh=true');
+    // 跳转到可视化报告页面
+    router.push('/evaluation/report');
   };
 
   return (
