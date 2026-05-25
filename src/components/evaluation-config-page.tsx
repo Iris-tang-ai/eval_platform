@@ -115,7 +115,7 @@ export function EvaluationConfigPage() {
           {/* Left Column - AI Intent & Goal Configuration (60%) */}
           <div className="lg:col-span-3 space-y-6">
             {/* Main Card Container */}
-            <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm">
               {/* Header */}
               <div className="px-6 py-5 border-b border-slate-100">
                 <h2 className="text-xl font-semibold text-slate-900">定义评测目标</h2>
@@ -220,7 +220,7 @@ export function EvaluationConfigPage() {
                       <div className={cn(
                         "absolute top-full left-0 right-0 mt-1",
                         "bg-white border border-slate-200 rounded-lg shadow-lg",
-                        "z-10 overflow-hidden"
+                        "z-50 overflow-hidden"
                       )}>
                         {modelOptions.map((model) => (
                           <button
